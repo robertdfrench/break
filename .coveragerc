@@ -5,3 +5,8 @@ omit =
   venv/*
   examples/*
   tests/*
+
+[report]
+omit = 
+  *nose*
+  tests/*
