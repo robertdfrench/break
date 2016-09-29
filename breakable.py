@@ -22,6 +22,3 @@ class log(object):
     @classmethod
     def info(cls, msg):
         cls._print(msg, '==> ', cls.yellow)
-
-if __name__ == "__main__":
-    print("Give me something to break!")
