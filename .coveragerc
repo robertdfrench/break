@@ -1,3 +1,7 @@
 [run]
 branch = True
-omit = venv/*
+source = .
+omit =
+  venv/*
+  examples/*
+  tests/*
