@@ -3,6 +3,8 @@
     Inspired by the elegant process invocation and management features of
     Spack (https://github.com/LLNL/spack).
 """
+import subprocess
+import shlex
 
 
 class log(object):
@@ -22,3 +24,28 @@ class log(object):
     @classmethod
     def info(cls, msg):
         cls._print(msg, '==> ', cls.yellow)
+
+
+class StringView(object):
+    def __init__(self, file_ish):
+        self.file_ish = file_ish
+
+    def __str__(self):
+        return self.file_ish.read()
+
+    def __iter__(self):
+        return self.file_ish
+
+
+class Executable(object):
+    def __init__(self, path, defaults=[]):
+        self.cmd = ' '.join([path] + defaults)
+
+    def __call__(self, *args):
+        proc = subprocess.Popen(
+            shlex.split(self.cmd),
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+            bufsize=1)
+        return StringView(proc.stdout)
