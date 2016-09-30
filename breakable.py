@@ -5,6 +5,7 @@
 """
 import subprocess
 import shlex
+import os
 
 
 class log(object):
@@ -39,13 +40,27 @@ class StringView(object):
 
 class Executable(object):
     def __init__(self, path, defaults=[]):
-        self.cmd = ' '.join([path] + defaults)
+        self.path = path
+        self.defaults = defaults
+
+    def _generate_command(self, *args):
+        return ' '.join([self.path] + self.defaults + list(args))
 
     def __call__(self, *args):
+        command = self._generate_command(*args)
+        log.info(command)
         proc = subprocess.Popen(
-            shlex.split(self.cmd),
+            shlex.split(command),
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
             universal_newlines=True,
             bufsize=1)
         return StringView(proc.stdout)
+
+
+def which(tool):
+    paths = ["."] + os.environ['PATH'].split(':')
+    for path in paths:
+        tool_path = os.path.join(path, tool)
+        if os.path.exists(tool_path):
+            return Executable(tool_path)
