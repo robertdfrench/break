@@ -4,10 +4,13 @@ python:
   - 3.5
 
 install:
-  - ./tests/setup.sh
+  - ./break -t setup_venv
 
 script:
-  - ./tests/run.sh
+  - ./break -t test
 
 after_success:
   - coveralls
+
+after_failure:
+  - cat htmlcov/breakable_py.html

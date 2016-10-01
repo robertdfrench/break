@@ -1,12 +1,13 @@
 [run]
 branch = True
-source = .
-omit =
-  venv/*
-  examples/*
-  tests/*
+source =
+  breakable.py
+  dummy.py
+include =
+  breakable.py
+  dummy.py
 
 [report]
-omit = 
-  *nose*
-  tests/*
+include =
+  breakable.py
+  dummy.py
