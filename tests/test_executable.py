@@ -12,6 +12,10 @@ class TestExecutable(unittest.TestCase):
         mock_echo = breakable.Executable("tests/mock_echo")
         mock_echo("we-know-where-youve-been")
 
+    def test_collect(self):
+        mock_echo = breakable.Executable("tests/mock_echo")
+        output = ''.join(mock_echo.collect("'hello\nmy-son'"))
+        self.assertEqual("hello my-son", output.rstrip())
 
 if __name__ == '__main__':
     unittest.main()
