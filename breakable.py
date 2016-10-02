@@ -12,6 +12,7 @@ import shlex
 import os
 import argparse
 import sys
+import re
 
 
 class log(object):
@@ -44,8 +45,24 @@ class Executable(object):
     def __call__(self, argstring=""):
         command = self._generate_command(argstring)
         log.info(command)
-        real_command = shlex.split("bash -c '%s'" % command)
+        real_command = shlex.split("bash -c \"%s\"" % command)
         rc = subprocess.call(real_command)
+        if rc != 0:  # pragma: no cover
+            sys.exit(rc)
+
+    def collect(self, argstring):
+        command = self._generate_command(argstring)
+        log.info(command)
+        real_command = shlex.split("bash -c \"%s\"" % command)
+        proc = subprocess.Popen(
+            real_command,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+            bufsize=1)
+        for line in proc.stdout:
+            yield line
+        rc = proc.wait()
         if rc != 0:  # pragma: no cover
             sys.exit(rc)
 
@@ -58,6 +75,14 @@ def which(tool, defaults=[]):
             return Executable(tool_path, defaults=defaults)
 
 rm = which("rm", defaults=["-f"])
+
+
+def find_files(pattern, directory="."):
+    for root, dirs, files in os.walk(directory):
+        for f in files:
+            path = os.path.join(root, f)
+            if re.match(pattern, path):
+                yield path
 
 
 def _get_args(argv):
@@ -74,41 +99,21 @@ def _get_args(argv):
     return parser.parse_args(argv)
 
 
-class RuleCollection(object):
-    def __init__(self):
-        self.internal_storage = {}
-        self.default = None
+def needs(filename):
+    if not os.path.exists(filename):
+        raise Exception("%s is needed but not found" % filename)
 
-    def __getitem__(self, key):
-        return self.internal_storage[key]
-
-    def __setitem__(self, key, value):
-        if not self.default:
-            self.default = key
-        self.internal_storage[key] = value
-
-    def __str__(self):
-        strings = ["Entrypoints:"]
-        for k in sorted(self.internal_storage):
-            v = self.internal_storage[k]
-            strings.append("  %s: %s" % (k, v))
-        return "\n".join(strings)
-
-_bk_entrypoints = RuleCollection()
-
-
-def entrypoint(func):
-    _bk_entrypoints[func.__name__] = func.__doc__
-    return func
-
-__all__ = ['entrypoint', '_bk_entrypoints', 'which', 'Executable', 'rm']
+__all__ = ['which', 'Executable', 'rm', 'needs', 'find_files']
 if __name__ == "__main__":  # pragma: no cover
     args = _get_args(sys.argv[1:])
-    import Breakfile as bf
+    from Breakfile import BreakTasks
+    tasklist = BreakTasks()
     if args.list_tasks:
-        print(bf._bk_entrypoints)
+        for attr in dir(tasklist):
+            if not attr.startswith('_'):
+                print(attr)
     else:
         if args.task:
-            getattr(bf, args.task)()
+            getattr(tasklist, args.task)()
         else:
-            getattr(bf, bf._bk_entrypoints.default)()
+            print("You should probably specify a task")

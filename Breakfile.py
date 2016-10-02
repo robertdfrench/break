@@ -1,26 +1,48 @@
 from breakable import *
 import os
 
-python = which('python')
-pyvenv = which('pyvenv') or which('virtualenv')
+class BreakTasks(object):
+    def clean(self):
+        """ Recursively remove *.pyc files """
+        rm("-r venv/")
+        for pyc in find_files(r".*\.pyc"):
+            rm(pyc)
 
-@entrypoint
-def test():
-    with_venv = setup_venv()
-    with_venv("flake8")
-    with_venv("nosetests --with-coverage --cover-min-percentage=100 --cover-html --cover-html-dir=htmlcov")
+    def test(self):
+        """ Run all tests """
+        self.check_style()
+        self.unittests()
 
-@entrypoint
-def setup_venv():
-    pyvenv("venv/")
-    with_venv = Executable("source venv/bin/activate && ")
-    with_venv("pip install --upgrade pip")
-    with_venv("pip install -r requirements.txt")
-    return with_venv
+    def clean_branches(self):
+        """ Remove all merged branches """
+        git = which("git")
+        for branch in git.collect("branch --merged | grep -v '*' | grep -v master"):
+            git("branch -d %s" % branch)
 
-@entrypoint
-def clean():
-    for root, dirs, files in os.walk("."):
-        for f in files:
-            if f.endswith('.pyc'):
-                rm(os.path.join(root, f))
+    def check_style(self):
+        self.install_requirements()
+        self.setup_venv()
+        self.with_venv("flake8")
+
+    def unittests(self):
+        self.install_requirements()
+        self.setup_venv()
+        self.with_venv("nosetests --with-coverage --cover-min-percentage=100 --cover-html --cover-html-dir=htmlcov")
+
+    def install_requirements(self):
+        if not os.path.exists("venv/"):
+            needs("requirements.txt")
+            self.setup_venv()
+            self.with_venv("pip install --upgrade pip")
+            self.with_venv("pip install -r requirements.txt")
+
+    def setup_venv(self):
+        if not hasattr(self, 'with_venv'):
+            self.find_pyvenv()
+            if not os.path.exists("venv/"):
+                self.pyvenv("venv/")
+            self.with_venv = Executable("source venv/bin/activate && ")
+
+    def find_pyvenv(self):
+        if not hasattr(self, 'pyvenv'):
+            self.pyvenv = which('pyvenv') or which('virtualenv')

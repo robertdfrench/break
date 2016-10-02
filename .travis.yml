@@ -3,11 +3,8 @@ python:
   - 2.7
   - 3.5
 
-install:
-  - ./break -t setup_venv
-
 script:
-  - ./break -t test
+  - ./breakable.py -t test
 
 after_success:
   - coveralls
