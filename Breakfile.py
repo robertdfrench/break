@@ -30,7 +30,7 @@ class BreakTasks(object):
         self.with_venv("nosetests --with-coverage --cover-min-percentage=100 --cover-html --cover-html-dir=htmlcov")
 
     def install_requirements(self):
-        if not os.path.exists("venv/"):
+        if not path("venv/").exists:
             needs("requirements.txt")
             self.setup_venv()
             self.with_venv("pip install --upgrade pip")
