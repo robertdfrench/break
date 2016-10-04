@@ -56,7 +56,7 @@ class Executable(object):
 
     def collect(self, argstring):
         command = self._generate_command(argstring)
-        log.info(command)
+        log.prompt(command)
         real_command = shlex.split("bash -c \"%s\"" % command)
         proc = subprocess.Popen(
             real_command,
