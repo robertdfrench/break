@@ -1,5 +1,4 @@
 from breakable import *
-import os
 
 class BreakTasks(object):
     def clean(self):
@@ -20,16 +19,19 @@ class BreakTasks(object):
             git("branch -d %s" % branch)
 
     def check_style(self):
+        """ Enforce PEP8 guidelines """
         self.install_requirements()
         self.setup_venv()
         self.with_venv("flake8")
 
     def unittests(self):
+        """ Run all unittests and measure coverage """
         self.install_requirements()
         self.setup_venv()
         self.with_venv("nosetests --with-coverage --cover-min-percentage=100 --cover-html --cover-html-dir=htmlcov")
 
     def install_requirements(self):
+        """ Install packages into virtual environment """
         if not path("venv/").exists:
             needs("requirements.txt")
             self.setup_venv()
@@ -37,12 +39,14 @@ class BreakTasks(object):
             self.with_venv("pip install -r requirements.txt")
 
     def setup_venv(self):
+        """ Create empty virtual environment """
         if not hasattr(self, 'with_venv'):
             self.find_pyvenv()
-            if not os.path.exists("venv/"):
+            if not path("venv/").exists:
                 self.pyvenv("venv/")
             self.with_venv = Executable("source venv/bin/activate && ")
 
     def find_pyvenv(self):
+        """ Find pyvenv or virtualenv commands """
         if not hasattr(self, 'pyvenv'):
             self.pyvenv = which('pyvenv') or which('virtualenv')
