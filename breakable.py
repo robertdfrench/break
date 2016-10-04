@@ -31,7 +31,11 @@ class log(object):
 
     @classmethod
     def info(cls, msg):
-        cls._print(msg, '==> ', cls.yellow)
+        cls._print(msg, '# ', cls.yellow)
+
+    @classmethod
+    def prompt(cls, msg):
+        cls._print(msg, '==> ', cls.blue)
 
 
 class Executable(object):
@@ -44,7 +48,7 @@ class Executable(object):
 
     def __call__(self, argstring=""):
         command = self._generate_command(argstring)
-        log.info(command)
+        log.prompt(command)
         real_command = shlex.split("bash -c \"%s\"" % command)
         rc = subprocess.call(real_command)
         if rc != 0:  # pragma: no cover
@@ -75,6 +79,7 @@ def which(tool, defaults=[]):
             return Executable(tool_path, defaults=defaults)
 
 rm = which("rm", defaults=["-f"])
+touch = which("touch")
 
 
 def find_files(pattern, directory="."):
@@ -91,6 +96,9 @@ def _get_args(argv):
         "-l", "--list-tasks",
         help="display available tasks", action="store_true")
     parser.add_argument(
+        "-c", "--clean",
+        help="Clean up breakstamps", action="store_true")
+    parser.add_argument(
         "-f", "--breakfile",
         help="path to Breakfile.py", default="Breakfile.py")
     parser.add_argument(
@@ -99,19 +107,88 @@ def _get_args(argv):
     return parser.parse_args(argv)
 
 
-def needs(filename):
-    if not os.path.exists(filename):
-        raise Exception("%s is needed but not found" % filename)
+def needs(*filenames):
+    for f in filenames:
+        if not os.path.exists(f):
+            raise Exception("%s is needed but not found" % f)
 
-__all__ = ['which', 'Executable', 'rm', 'needs', 'find_files']
+
+def only_if_modified(*filenames):
+    needs(*(filenames + (__file__,)))
+
+    def wrapper(func):
+        def wrapped(self=None):
+            timestamp_file = path(".breakstamp.%s" % func.__name__)
+            dirty = False
+            for f in filenames:
+                if timestamp_file.dirtier_than(f):
+                    dirty = True
+                    break
+            if dirty:
+                of_the_jedi = func(self)
+                touch(timestamp_file)
+                return of_the_jedi
+        wrapped.__doc__ = func.__doc__
+        return wrapped
+    return wrapper
+
+
+def provides(filename):
+    def wrapper(func):
+        def wrapped(self=None):
+            if not path(filename).exists:
+                return func(self)
+        wrapped.__doc__ = func.__doc__
+        return wrapped
+    return wrapper
+
+
+class BreakPath(str):
+    def newer_than(self, other):
+        if not os.path.exists(self):
+            msg = "Cannot compare %s with %s." % (self, other)
+            msg += " %s does not exist." % (self)
+            raise Exception(msg)
+        if not os.path.exists(other):
+            msg = "Cannot compare %s with %s." % (self, other)
+            msg += " %s does not exist." % (other)
+            raise Exception(msg)
+        return os.path.getmtime(self) > os.path.getmtime(other)
+
+    def dirtier_than(self, dependency):
+        if not os.path.exists(dependency):
+            msg = "Cannot compare %s with %s." % (self, dependency)
+            msg += " %s does not exist." % (dependency)
+            raise Exception(msg)
+        if not os.path.exists(self):
+            return True
+        return path(dependency).newer_than(self)
+
+    @property
+    def exists(self):
+        return os.path.exists(self)
+
+
+def path(*filename_parts):
+    return BreakPath(os.path.join(*filename_parts))
+
+__all__ = [
+    'which', 'Executable', 'rm', 'needs', 'find_files', 'path', 'touch',
+    'only_if_modified', 'provides', 'log']
 if __name__ == "__main__":  # pragma: no cover
     args = _get_args(sys.argv[1:])
+    if args.clean:
+        for f in find_files(r".*breakstamp.*", "."):
+            rm(f)
     from Breakfile import BreakTasks
     tasklist = BreakTasks()
     if args.list_tasks:
         for attr in dir(tasklist):
             if not attr.startswith('_'):
-                print(attr)
+                typename = type(getattr(tasklist, attr)).__name__
+                docs = getattr(tasklist, attr).__doc__
+                if typename == 'instancemethod':
+                    print("%s: %s" % (attr, docs))
     else:
         if args.task:
             getattr(tasklist, args.task)()
