@@ -70,6 +70,9 @@ class Executable(object):
         if rc != 0:  # pragma: no cover
             sys.exit(rc)
 
+    def grab(self, argstring):
+        return ''.join(self.collect(argstring))
+
 
 def which(tool, defaults=[]):
     paths = ["."] + os.environ['PATH'].split(':')
