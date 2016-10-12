@@ -21,32 +21,29 @@ class BreakTasks(object):
     def check_style(self):
         """ Enforce PEP8 guidelines """
         self.install_requirements()
-        self.setup_venv()
         self.with_venv("flake8")
 
     def unittests(self):
         """ Run all unittests and measure coverage """
         self.install_requirements()
-        self.setup_venv()
         self.with_venv("nosetests --with-coverage --cover-min-percentage=100 --cover-html --cover-html-dir=htmlcov")
 
+    @only_if_modified("requirements.txt")
     def install_requirements(self):
         """ Install packages into virtual environment """
+        self.pip("install --upgrade pip")
+        self.pip("install -r requirements.txt")
+
+    @belhorn_property
+    def pip(self):
+        return lambda x: self.with_venv("pip %s" % x)
+
+    @belhorn_property
+    def with_venv(self):
         if not path("venv/").exists:
-            needs("requirements.txt")
-            self.setup_venv()
-            self.with_venv("pip install --upgrade pip")
-            self.with_venv("pip install -r requirements.txt")
+            self.pyvenv("venv/")
+        return Executable("source venv/bin/activate && ")
 
-    def setup_venv(self):
-        """ Create empty virtual environment """
-        if not hasattr(self, 'with_venv'):
-            self.find_pyvenv()
-            if not path("venv/").exists:
-                self.pyvenv("venv/")
-            self.with_venv = Executable("source venv/bin/activate && ")
-
-    def find_pyvenv(self):
-        """ Find pyvenv or virtualenv commands """
-        if not hasattr(self, 'pyvenv'):
-            self.pyvenv = which('pyvenv') or which('virtualenv')
+    @belhorn_property
+    def pyvenv(self):
+        return which('pyvenv') or which('virtualenv')

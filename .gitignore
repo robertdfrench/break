@@ -90,3 +90,6 @@ ENV/
 
 # Vim stuff
 *.swp
+
+# Breakstamps
+*.breakstamp.*
