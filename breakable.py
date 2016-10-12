@@ -13,6 +13,7 @@ import os
 import argparse
 import sys
 import re
+import urllib
 
 
 class log(object):
@@ -102,6 +103,9 @@ def _get_args(argv):
         "-c", "--clean",
         help="Clean up breakstamps", action="store_true")
     parser.add_argument(
+        "-u", "--update",
+        help="Update breakable.py", action="store_true")
+    parser.add_argument(
         "-f", "--breakfile",
         help="path to Breakfile.py", default="Breakfile.py")
     parser.add_argument(
@@ -175,6 +179,9 @@ class BreakPath(str):
 def path(*filename_parts):
     return BreakPath(os.path.join(*filename_parts))
 
+_url_for_latest_breakable = \
+    'http://raw.githubusercontent.com/robertdfrench/break/master/breakable.py'
+
 __all__ = [
     'which', 'Executable', 'rm', 'needs', 'find_files', 'path', 'touch',
     'only_if_modified', 'provides', 'log']
@@ -183,6 +190,14 @@ if __name__ == "__main__":  # pragma: no cover
     if args.clean:
         for f in find_files(r".*breakstamp.*", "."):
             rm(f)
+        log.info("Removing timestamps; All targets should rebuild now")
+        sys.exit(0)
+    if args.update:
+        new_breakable = urllib.urlopen(_url_for_latest_breakable)
+        with open(__file__, "w") as old_breakable:
+            old_breakable.write(new_breakable.read())
+        log.info("breakfile.py updated to latest version")
+        sys.exit(0)
     from Breakfile import BreakTasks
     tasklist = BreakTasks()
     if args.list_tasks:
