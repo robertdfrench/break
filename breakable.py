@@ -196,7 +196,7 @@ _url_for_latest_breakable = \
 
 __all__ = [
     'which', 'Executable', 'rm', 'needs', 'find_files', 'path', 'touch',
-    'only_if_modified', 'provides', 'log']
+    'only_if_modified', 'provides', 'log', 'belhorn_property']
 if __name__ == "__main__":  # pragma: no cover
     args = _get_args(sys.argv[1:])
     if args.clean:
@@ -208,7 +208,8 @@ if __name__ == "__main__":  # pragma: no cover
         new_breakable = urllib.urlopen(_url_for_latest_breakable)
         with open(__file__, "w") as old_breakable:
             old_breakable.write(new_breakable.read())
-        log.info("breakfile.py updated to latest version")
+        log.info("Overwriting your old-ass breakable.py with the latest copy")
+        log.info("Be sure to include these changes in your next commit!")
         sys.exit(0)
     from Breakfile import BreakTasks
     tasklist = BreakTasks()
