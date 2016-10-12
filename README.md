@@ -33,6 +33,16 @@ $ ./breakable.py -t test
 
 To list other entrypoints, run `./breakable.py -l`
 
+### Getting the latest copy
+
+Who has time to run around with outdated build software? Fucking nobody, that's who.
+
+```
+$ ./breakable.py -u
+# Overwriting your old-ass breakable.py with the latest copy
+# Be sure to include these changes in your next commit!
+```
+
 ## Eating my own dogfood
 Breakable builds and tests itself. Take a look at the [Breakfile.py](Breakfile.py)
 in this directory. 
