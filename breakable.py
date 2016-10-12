@@ -179,6 +179,18 @@ class BreakPath(str):
 def path(*filename_parts):
     return BreakPath(os.path.join(*filename_parts))
 
+
+def belhorn_property(function):
+    '''Pirated implementation of @mpbelhorn's cached property decorator'''
+
+    @property
+    def _belhorn_wrapper(self):
+        cached_name = "_cached_%s" % function.__name__
+        if not hasattr(self, cached_name):
+            setattr(self, cached_name, function(self))
+        return getattr(self, cached_name)
+    return _belhorn_wrapper
+
 _url_for_latest_breakable = \
     'http://raw.githubusercontent.com/robertdfrench/break/master/breakable.py'
 
