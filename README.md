@@ -8,8 +8,7 @@ Autotools and CMake use obscure Macro languages that compile to Makefiles (or,
 in the case of autotools, it compiles to a bash file that then generates
 Makefiles). That's all fine except when it comes to *debugging them*. If your
 build system is other than non-trivial, you will have to debug it at some point,
-and that's when all the nasty DSL shitwinds will come crashing down in a
-buildnami tidal wave.
+and that can be painful.
 
 ## Using Breakable
 Download the latest [breakable.py](https://raw.githubusercontent.com/robertdfrench/break/master/breakable.py)
@@ -35,7 +34,7 @@ To list other entrypoints, run `./breakable.py -l`
 
 ### Getting the latest copy
 
-Who has time to run around with outdated build software? Fucking nobody, that's who.
+Who has time to run around with outdated build software?
 
 ```
 $ ./breakable.py -u
